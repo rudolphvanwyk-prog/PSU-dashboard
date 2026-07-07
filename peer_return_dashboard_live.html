@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Peer performance benchmark</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600&family=Inter:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+:root{
+  --bg:#F6F7F9;
+  --card:#FFFFFF;
+  --border:#E2E5EA;
+  --ink:#12161F;
+  --ink-soft:#5B6472;
+  --ink-faint:#8B93A0;
+  --peer:#C7CCD6;
+  --peer-line:#AAB1BE;
+  --accent:#0332AF;
+  --accent-bg:#E7EAF8;
+  --accent-line:#5A6FC4;
+  --neg:#9AA1AD;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:'Inter',sans-serif;
+  padding:48px 24px 80px;
+}
+.wrap{max-width:920px;margin:0 auto;}
+.eyebrow-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  margin:0 0 12px;
+}
+.eyebrow{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12px;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  color:var(--accent);
+  margin:0;
+}
+.refresh-btn{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;
+  color:var(--ink-soft);
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:6px 12px;
+  cursor:pointer;
+}
+.refresh-btn:hover{border-color:var(--accent-line);color:var(--accent);}
+h1{
+  font-family:'Space Grotesk',sans-serif;
+  font-weight:600;
+  font-size:32px;
+  line-height:1.2;
+  margin:0 0 12px;
+  letter-spacing:-0.01em;
+}
+.intro{
+  font-size:15px;
+  color:var(--ink-soft);
+  max-width:640px;
+  line-height:1.6;
+  margin:0 0 8px;
+}
+.updated-line{
+  font-size:12px;
+  color:var(--ink-faint);
+  font-family:'IBM Plex Mono',monospace;
+  margin:0 0 40px;
+}
+.state-box{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:40px 28px;
+  text-align:center;
+  color:var(--ink-soft);
+  font-size:14px;
+  margin-bottom:40px;
+}
+.state-box.error{
+  border-color:#E3B0AA;
+  background:#FCEFED;
+  color:#8A2E22;
+  text-align:left;
+}
+.state-box.error a{color:#8A2E22;}
+.kpi-row{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:14px;
+  margin-bottom:40px;
+}
+.kpi{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:20px 22px;
+}
+.kpi-label{
+  font-size:12px;
+  color:var(--ink-faint);
+  text-transform:uppercase;
+  letter-spacing:0.04em;
+  margin:0 0 8px;
+}
+.kpi-value{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:30px;
+  font-weight:600;
+  margin:0;
+}
+.kpi-sub{
+  font-size:13px;
+  color:var(--ink-soft);
+  margin:6px 0 0;
+}
+.kpi.highlight{
+  border-color:var(--accent-line);
+  background:var(--accent-bg);
+}
+.kpi.highlight .kpi-value{color:var(--accent);}
+.kpi.highlight .kpi-label{color:#1F2E7A;}
+
+.section-label{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:0.06em;
+  color:var(--ink-faint);
+  margin:0 0 14px;
+}
+
+.ruler-card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:28px 28px 22px;
+  margin-bottom:40px;
+}
+.ruler-track{
+  position:relative;
+  height:6px;
+  background:var(--peer);
+  border-radius:3px;
+  margin:36px 0 14px;
+}
+.ruler-fill{
+  position:absolute;
+  left:0;top:0;bottom:0;
+  background:var(--accent-line);
+  border-radius:3px;
+}
+.ruler-tick{
+  position:absolute;
+  top:-4px;
+  width:1px;
+  height:14px;
+  background:var(--border);
+}
+.ruler-tick-label{
+  position:absolute;
+  top:14px;
+  transform:translateX(-50%);
+  font-size:11px;
+  color:var(--ink-faint);
+  font-family:'IBM Plex Mono',monospace;
+}
+.ruler-marker{
+  position:absolute;
+  top:-13px;
+  width:2px;
+  height:32px;
+  background:var(--accent);
+}
+.ruler-marker-label{
+  position:absolute;
+  top:-40px;
+  transform:translateX(-50%);
+  font-size:12px;
+  font-weight:500;
+  color:var(--accent);
+  white-space:nowrap;
+  font-family:'IBM Plex Mono',monospace;
+}
+.ruler-caption{
+  font-size:13px;
+  color:var(--ink-soft);
+  margin:22px 0 0;
+  line-height:1.6;
+}
+
+.chart-card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:24px 28px 12px;
+  margin-bottom:40px;
+}
+.legend-row{
+  display:flex;
+  gap:20px;
+  margin-bottom:16px;
+  font-size:12px;
+  color:var(--ink-soft);
+}
+.legend-item{display:flex;align-items:center;gap:6px;}
+.legend-swatch{width:10px;height:10px;border-radius:2px;}
+
+.table-card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:24px 28px 28px;
+}
+.table-head-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:16px;
+  gap:16px;
+}
+input#filter{
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:8px 12px;
+  font-size:13px;
+  font-family:'Inter',sans-serif;
+  width:220px;
+  background:var(--bg);
+  color:var(--ink);
+}
+input#filter:focus{outline:none;border-color:var(--accent-line);}
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:13px;
+}
+th{
+  text-align:left;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:0.03em;
+  color:var(--ink-faint);
+  font-weight:400;
+  padding:8px 10px;
+  border-bottom:1px solid var(--border);
+}
+th.num,td.num{text-align:right;}
+td{
+  padding:9px 10px;
+  border-bottom:1px solid var(--border);
+  color:var(--ink);
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12.5px;
+}
+td.company-cell{font-family:'Inter',sans-serif;font-size:13px;}
+tr.group-row td{
+  background:var(--accent-bg);
+  color:#1B2A7A;
+  font-weight:500;
+}
+tr.group-row td.company-cell{color:var(--accent);}
+.pos{color:#3D7A5A;}
+.neg{color:#B1483F;}
+.rank-cell{color:var(--ink-faint);width:36px;}
+.hidden{display:none;}
+.source-line{
+  font-size:12px;
+  color:var(--ink-faint);
+  margin-top:24px;
+  font-family:'IBM Plex Mono',monospace;
+}
+.source-line a{color:var(--ink-soft);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow-row">
+    <p class="eyebrow">Peer performance benchmark &middot; VWAP-based annualised return</p>
+    <button class="refresh-btn" id="refreshBtn">Refresh data</button>
+  </div>
+  <h1>Where the Group sits against the peer set</h1>
+  <p class="intro">Annualised share-price return over the measurement period for the peer set, benchmarked against the Group&rsquo;s own market-cap-weighted annualised return. Pulled live from the source sheet on every visit.</p>
+  <p class="updated-line" id="updatedLine">Loading latest data&hellip;</p>
+
+  <div id="loadingState" class="state-box">Fetching the latest figures from the source sheet&hellip;</div>
+  <div id="errorState" class="state-box error hidden"></div>
+
+  <div id="dashboardContent" class="hidden">
+    <div class="kpi-row">
+      <div class="kpi highlight">
+        <p class="kpi-label">Group annualised return</p>
+        <p class="kpi-value" id="kpiAnn">&mdash;</p>
+        <p class="kpi-sub" id="kpiAnnSub">&mdash;</p>
+      </div>
+      <div class="kpi">
+        <p class="kpi-label">Rank among peer set</p>
+        <p class="kpi-value" id="kpiRank">&mdash;</p>
+        <p class="kpi-sub">1 = highest annualised return</p>
+      </div>
+      <div class="kpi">
+        <p class="kpi-label">Percentile</p>
+        <p class="kpi-value" id="kpiPct">&mdash;</p>
+        <p class="kpi-sub" id="kpiPctSub">&mdash;</p>
+      </div>
+    </div>
+
+    <div class="ruler-card">
+      <p class="section-label">Percentile position</p>
+      <div class="ruler-track" id="rulerTrack">
+        <div class="ruler-fill" id="rulerFill"></div>
+      </div>
+      <p class="ruler-caption" id="rulerCaption">&mdash;</p>
+    </div>
+
+    <div class="chart-card">
+      <p class="section-label">Ranked annualised return &middot; all constituents</p>
+      <div class="legend-row">
+        <span class="legend-item"><span class="legend-swatch" style="background:var(--peer-line)"></span>Peer company</span>
+        <span class="legend-item"><span class="legend-swatch" style="background:var(--accent)"></span>Group</span>
+      </div>
+      <div id="chartWrap" style="position:relative;width:100%;">
+        <canvas id="rankChart" role="img" aria-label="Horizontal bar chart ranking annualised return for all peer companies and the Group, sorted highest to lowest"></canvas>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <div class="table-head-row">
+        <p class="section-label" style="margin:0;">Full data &middot; sorted by annualised return</p>
+        <input type="text" id="filter" placeholder="Search company or ticker">
+      </div>
+      <table id="dataTable">
+        <thead>
+          <tr>
+            <th class="num">Rank</th>
+            <th>Company</th>
+            <th>Ticker</th>
+            <th class="num">Opening VWAP</th>
+            <th class="num">Closing VWAP</th>
+            <th class="num">Total return</th>
+            <th class="num">Annualised return</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+    <p class="source-line">Source: <a href="https://docs.google.com/spreadsheets/d/1YcUfHAI595C1prQSPXdHTDQz-A9SfOIxLD5116Z746s/edit" target="_blank" rel="noopener">Google Sheet</a>, tab "PSU calc_FB"</p>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script>
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQjQUdhdGDwB5tQQkun3l34geN2tQR63SpXbWEgc2lNKq0jbvUkQUABp_ywP-ebPmYKlYFzryeVnHm2/pub?gid=1014347898&single=true&output=csv';
+
+let chartInstance = null;
+
+function toNumber(raw){
+  if (raw === undefined || raw === null) return NaN;
+  const s = String(raw).replace(/[,\s]/g, '').trim();
+  return parseFloat(s);
+}
+
+function toPercent(raw){
+  if (raw === undefined || raw === null || raw === '') return NaN;
+  let s = String(raw).replace(/[%,\s]/g, '').trim();
+  let v = parseFloat(s);
+  if (isNaN(v)) return NaN;
+  if (Math.abs(v) <= 5) v = v * 100;
+  return v;
+}
+
+async function loadData(){
+  const loadingEl = document.getElementById('loadingState');
+  const errorEl = document.getElementById('errorState');
+  const contentEl = document.getElementById('dashboardContent');
+  const updatedLine = document.getElementById('updatedLine');
+
+  loadingEl.classList.remove('hidden');
+  errorEl.classList.add('hidden');
+  contentEl.classList.add('hidden');
+  updatedLine.textContent = 'Loading latest data\u2026';
+
+  try {
+    const resp = await fetch(CSV_URL, { cache: 'no-store' });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const csvText = await resp.text();
+    if (csvText.trim().startsWith('<')) {
+      throw new Error('Sheet is not publicly viewable (received an HTML sign-in page instead of CSV).');
+    }
+    const parsed = Papa.parse(csvText, { skipEmptyLines: true });
+    const rows = parsed.data;
+
+    const companies = [];
+    let group = null;
+
+    for (let i = 1; i < rows.length; i++) {
+      const r = rows[i];
+      if (!r || r.length < 3) continue;
+      const ticker = (r[0] || '').trim();
+      const company = (r[1] || '').trim();
+
+      if (company === 'Group Market cap') {
+        group = {
+          opening: toNumber(r[3]),
+          closing: toNumber(r[4]),
+          total_return: toPercent(r[5]),
+          ann_return: toPercent(r[6]),
+        };
+        continue;
+      }
+
+      if (ticker && company && r[3] !== undefined && r[6] !== undefined && r[6] !== '') {
+        const ann = toPercent(r[6]);
+        if (isNaN(ann)) continue;
+        companies.push({
+          ticker, company,
+          yahoo: (r[2] || '').trim(),
+          opening: toNumber(r[3]),
+          closing: toNumber(r[4]),
+          total_return: toPercent(r[5]),
+          ann_return: ann,
+          is_group: false,
+        });
+      }
+    }
+
+    if (!group || companies.length === 0) {
+      throw new Error('Could not find the expected columns in the "PSU calc_FB" tab. The sheet layout may have changed.');
+    }
+
+    const combined = companies.slice();
+    combined.push({
+      company: 'Group', ticker: 'GROUP', yahoo: '',
+      opening: group.opening, closing: group.closing,
+      total_return: group.total_return, ann_return: group.ann_return,
+      is_group: true,
+    });
+    combined.sort((a, b) => b.ann_return - a.ann_return);
+    combined.forEach((c, i) => c.rank = i + 1);
+
+    renderDashboard(combined);
+    loadingEl.classList.add('hidden');
+    contentEl.classList.remove('hidden');
+    updatedLine.textContent = 'Last refreshed ' + new Date().toLocaleString();
+
+  } catch (err) {
+    loadingEl.classList.add('hidden');
+    contentEl.classList.add('hidden');
+    errorEl.classList.remove('hidden');
+    errorEl.innerHTML = '<strong>Could not load live data.</strong><br><br>' +
+      (err.message || 'Unknown error') +
+      '<br><br>Check that the Google Sheet is shared as "Anyone with the link can view", then use Refresh data above. If the issue persists, the sheet\'s sharing setting may have changed back to restricted.';
+    updatedLine.textContent = 'Last refresh attempt failed \u2014 ' + new Date().toLocaleString();
+  }
+}
+
+function renderDashboard(data){
+  const groupRow = data.find(d => d.is_group);
+  const totalN = data.length;
+  const peers = data.filter(d => !d.is_group);
+  const below = peers.filter(p => p.ann_return < groupRow.ann_return).length;
+  const pct = Math.round(below / peers.length * 100);
+
+  document.getElementById('kpiAnn').textContent = (groupRow.ann_return >= 0 ? '+' : '') + groupRow.ann_return.toFixed(1) + '%';
+  document.getElementById('kpiAnnSub').textContent = 'Total return of ' + (groupRow.total_return >= 0 ? '+' : '') + groupRow.total_return.toFixed(1) + '% over the period';
+  document.getElementById('kpiRank').textContent = groupRow.rank + ' of ' + totalN;
+  document.getElementById('kpiPct').textContent = pct + 'th';
+  document.getElementById('kpiPctSub').textContent = 'Outperforms ' + pct + '% of the peer set';
+
+  const track = document.getElementById('rulerTrack');
+  track.querySelectorAll('.ruler-tick, .ruler-tick-label, .ruler-marker, .ruler-marker-label').forEach(el => el.remove());
+  document.getElementById('rulerFill').style.width = pct + '%';
+  [0, 25, 50, 75, 100].forEach(t => {
+    const tick = document.createElement('div');
+    tick.className = 'ruler-tick';
+    tick.style.left = t + '%';
+    track.appendChild(tick);
+    const label = document.createElement('div');
+    label.className = 'ruler-tick-label';
+    label.style.left = t + '%';
+    label.textContent = t;
+    track.appendChild(label);
+  });
+  const marker = document.createElement('div');
+  marker.className = 'ruler-marker';
+  marker.style.left = pct + '%';
+  track.appendChild(marker);
+  const markerLabel = document.createElement('div');
+  markerLabel.className = 'ruler-marker-label';
+  markerLabel.style.left = pct + '%';
+  markerLabel.textContent = 'Group \u00b7 ' + pct + 'th pct';
+  track.appendChild(markerLabel);
+  document.getElementById('rulerCaption').textContent =
+    'The Group\u2019s annualised return of ' + (groupRow.ann_return >= 0 ? '+' : '') + groupRow.ann_return.toFixed(1) +
+    '% sits at the ' + pct + 'th percentile of the peer distribution.';
+
+  const chartHeight = totalN * 26 + 60;
+  document.getElementById('chartWrap').style.height = chartHeight + 'px';
+
+  const labels = data.map(d => d.company);
+  const values = data.map(d => d.ann_return);
+  const colors = data.map(d => d.is_group ? '#0332AF' : '#C7CCD6');
+
+  if (chartInstance) chartInstance.destroy();
+  chartInstance = new Chart(document.getElementById('rankChart'), {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        data: values,
+        backgroundColor: colors,
+        borderRadius: 3,
+        barThickness: 11,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => (ctx.raw >= 0 ? '+' : '') + ctx.raw.toFixed(1) + '% annualised'
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: '#E2E5EA' },
+          ticks: { color: '#8B93A0', font: { size: 11 }, callback: (v) => (v >= 0 ? '+' : '') + v + '%' }
+        },
+        y: {
+          grid: { display: false },
+          ticks: { color: '#5B6472', font: { size: 11 } }
+        }
+      }
+    }
+  });
+
+  function renderTable(filterText) {
+    const tbody = document.getElementById('tableBody');
+    tbody.innerHTML = '';
+    const f = (filterText || '').toLowerCase();
+    data.forEach(d => {
+      if (f && !d.company.toLowerCase().includes(f) && !d.ticker.toLowerCase().includes(f)) return;
+      const tr = document.createElement('tr');
+      if (d.is_group) tr.className = 'group-row';
+      const totalCls = d.total_return >= 0 ? 'pos' : 'neg';
+      const annCls = d.ann_return >= 0 ? 'pos' : 'neg';
+      tr.innerHTML = `
+        <td class="num rank-cell">${d.rank}</td>
+        <td class="company-cell">${d.company}</td>
+        <td>${d.ticker}</td>
+        <td class="num">${Number.isFinite(d.opening) ? d.opening.toLocaleString(undefined, {maximumFractionDigits: 2}) : '\u2014'}</td>
+        <td class="num">${Number.isFinite(d.closing) ? d.closing.toLocaleString(undefined, {maximumFractionDigits: 2}) : '\u2014'}</td>
+        <td class="num ${d.is_group ? '' : totalCls}">${d.total_return >= 0 ? '+' : ''}${d.total_return.toFixed(1)}%</td>
+        <td class="num ${d.is_group ? '' : annCls}">${d.ann_return >= 0 ? '+' : ''}${d.ann_return.toFixed(1)}%</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+  renderTable('');
+  document.getElementById('filter').oninput = (e) => renderTable(e.target.value);
+}
+
+document.getElementById('refreshBtn').addEventListener('click', loadData);
+loadData();
+</script>
+</body>
+</html>
