@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Peer performance benchmark</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600&family=Inter:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+:root{
+  --bg:#F6F7F9;
+  --card:#FFFFFF;
+  --border:#E2E5EA;
+  --ink:#12161F;
+  --ink-soft:#5B6472;
+  --ink-faint:#8B93A0;
+  --peer:#C7CCD6;
+  --peer-line:#AAB1BE;
+  --accent:#0332AF;
+  --accent-bg:#E7EAF8;
+  --accent-line:#5A6FC4;
+  --neg:#9AA1AD;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:'Inter',sans-serif;
+  padding:48px 24px 80px;
+}
+.wrap{max-width:920px;margin:0 auto;}
+.eyebrow{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12px;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  color:var(--accent);
+  margin:0 0 12px;
+}
+h1{
+  font-family:'Space Grotesk',sans-serif;
+  font-weight:600;
+  font-size:32px;
+  line-height:1.2;
+  margin:0 0 12px;
+  letter-spacing:-0.01em;
+}
+.as-of{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12px;
+  color:var(--ink-faint);
+  margin:0 0 16px;
+}
+.intro{
+  font-size:15px;
+  color:var(--ink-soft);
+  max-width:640px;
+  line-height:1.6;
+  margin:0 0 40px;
+}
+.kpi-row{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:14px;
+  margin-bottom:40px;
+}
+.kpi{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:20px 22px;
+}
+.kpi-label{
+  font-size:12px;
+  color:var(--ink-faint);
+  text-transform:uppercase;
+  letter-spacing:0.04em;
+  margin:0 0 8px;
+}
+.kpi-value{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:30px;
+  font-weight:600;
+  margin:0;
+}
+.kpi-sub{
+  font-size:13px;
+  color:var(--ink-soft);
+  margin:6px 0 0;
+}
+.kpi.highlight{
+  border-color:var(--accent-line);
+  background:var(--accent-bg);
+}
+.kpi.highlight .kpi-value{color:var(--accent);}
+.kpi.highlight .kpi-label{color:#1F2E7A;}
+
+.section-label{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:0.06em;
+  color:var(--ink-faint);
+  margin:0 0 14px;
+}
+
+.ruler-card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:28px 28px 22px;
+  margin-bottom:40px;
+}
+.ruler-track{
+  position:relative;
+  height:6px;
+  background:var(--peer);
+  border-radius:3px;
+  margin:36px 0 14px;
+}
+.ruler-fill{
+  position:absolute;
+  left:0;top:0;bottom:0;
+  background:var(--accent-line);
+  border-radius:3px;
+}
+.ruler-tick{
+  position:absolute;
+  top:-4px;
+  width:1px;
+  height:14px;
+  background:var(--border);
+}
+.ruler-tick-label{
+  position:absolute;
+  top:14px;
+  transform:translateX(-50%);
+  font-size:11px;
+  color:var(--ink-faint);
+  font-family:'IBM Plex Mono',monospace;
+}
+.ruler-marker{
+  position:absolute;
+  top:-13px;
+  width:2px;
+  height:32px;
+  background:var(--accent);
+}
+.ruler-marker-label{
+  position:absolute;
+  top:-40px;
+  transform:translateX(-50%);
+  font-size:12px;
+  font-weight:500;
+  color:var(--accent);
+  white-space:nowrap;
+  font-family:'IBM Plex Mono',monospace;
+}
+.ruler-caption{
+  font-size:13px;
+  color:var(--ink-soft);
+  margin:22px 0 0;
+  line-height:1.6;
+}
+
+.chart-card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:24px 28px 12px;
+  margin-bottom:40px;
+}
+.legend-row{
+  display:flex;
+  gap:20px;
+  margin-bottom:16px;
+  font-size:12px;
+  color:var(--ink-soft);
+}
+.legend-item{display:flex;align-items:center;gap:6px;}
+.legend-swatch{width:10px;height:10px;border-radius:2px;}
+
+.table-card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:24px 28px 28px;
+}
+.table-head-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:16px;
+  gap:16px;
+}
+input#filter{
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:8px 12px;
+  font-size:13px;
+  font-family:'Inter',sans-serif;
+  width:220px;
+  background:var(--bg);
+  color:var(--ink);
+}
+input#filter:focus{outline:none;border-color:var(--accent-line);}
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:13px;
+}
+th{
+  text-align:left;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:0.03em;
+  color:var(--ink-faint);
+  font-weight:400;
+  padding:8px 10px;
+  border-bottom:1px solid var(--border);
+}
+th.num,td.num{text-align:right;}
+td{
+  padding:9px 10px;
+  border-bottom:1px solid var(--border);
+  color:var(--ink);
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12.5px;
+}
+td.company-cell{font-family:'Inter',sans-serif;font-size:13px;}
+tr.group-row td{
+  background:var(--accent-bg);
+  color:#1B2A7A;
+  font-weight:500;
+}
+tr.group-row td.company-cell{color:var(--accent);font-weight:700;}
+.pos{color:#3D7A5A;}
+.neg{color:#B1483F;}
+.rank-cell{color:var(--ink-faint);width:36px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">Peer performance benchmark &middot; VWAP-based annualised return</p>
+  <h1>Where the Group sits against the peer set</h1>
+  <p class="as-of">As of 2 July 2026 (measurement period start: 1 July 2024)</p>
+  <p class="intro">Annualised share-price return over the measurement period for 48 peer companies, benchmarked against the Group&rsquo;s own market-cap-weighted annualised return.</p>
+
+  <div class="kpi-row">
+    <div class="kpi highlight">
+      <p class="kpi-label">Group annualised return</p>
+      <p class="kpi-value">+3.5%</p>
+      <p class="kpi-sub">Total return of 7.0% over the period</p>
+    </div>
+    <div class="kpi">
+      <p class="kpi-label">Rank among peer set</p>
+      <p class="kpi-value">26 of 49</p>
+      <p class="kpi-sub">1 = highest annualised return</p>
+    </div>
+    <div class="kpi">
+      <p class="kpi-label">Percentile</p>
+      <p class="kpi-value">48th</p>
+      <p class="kpi-sub">Outperforms 48% of the peer set</p>
+    </div>
+  </div>
+
+  <div class="ruler-card">
+    <p class="section-label">Percentile position</p>
+    <div class="ruler-track" id="rulerTrack">
+      <div class="ruler-fill" id="rulerFill"></div>
+    </div>
+    <p class="ruler-caption">The Group&rsquo;s annualised return of +3.5% sits at the 48th percentile of the peer distribution &mdash; ahead of roughly half the peer set, just below the median performer.</p>
+  </div>
+
+  <div class="chart-card">
+    <p class="section-label">Ranked annualised return &middot; all constituents</p>
+    <div class="legend-row">
+      <span class="legend-item"><span class="legend-swatch" style="background:#3D7A5A"></span>Positive return</span>
+      <span class="legend-item"><span class="legend-swatch" style="background:#B1483F"></span>Negative return</span>
+      <span class="legend-item"><span class="legend-swatch" style="background:var(--accent)"></span>Group Market Cap</span>
+      <span class="legend-item"><span style="width:14px;height:0;border-top:1px dashed #8B93A0;display:inline-block;"></span>30th / 50th / 75th percentile</span>
+    </div>
+    <div style="position:relative;width:100%;height:1334px;">
+      <canvas id="rankChart" role="img" aria-label="Horizontal bar chart ranking annualised return for all peer companies and the Group, sorted highest to lowest"></canvas>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <div class="table-head-row">
+      <p class="section-label" style="margin:0;">Full data &middot; sorted by annualised return</p>
+      <input type="text" id="filter" placeholder="Search company or ticker">
+    </div>
+    <table id="dataTable">
+      <thead>
+        <tr>
+          <th class="num">Rank</th>
+          <th>Company</th>
+          <th>Ticker</th>
+          <th class="num">Opening VWAP</th>
+          <th class="num">Closing VWAP</th>
+          <th class="num">Total return</th>
+          <th class="num">Annualised return</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const DATA = [{"company": "SoftBank Group", "ticker": "9984 JP Equity", "yahoo": "9984.T", "opening": 15.03, "closing": 44.16, "total_return": 193.8, "ann_return": 71.3, "is_group": false, "rank": 1}, {"company": "One97 Comms", "ticker": "PAYTM IN Equity", "yahoo": "PAYTM.NS", "opening": 4.62, "closing": 11.65, "total_return": 152.3, "ann_return": 58.7, "is_group": false, "rank": 2}, {"company": "eBay", "ticker": "EBAY US Equity", "yahoo": "EBAY", "opening": 53.3, "closing": 110.12, "total_return": 106.6, "ann_return": 43.7, "is_group": false, "rank": 3}, {"company": "Alphabet", "ticker": "GOOGL US Equity", "yahoo": "GOOGL", "opening": 176.79, "closing": 361.12, "total_return": 104.3, "ann_return": 42.9, "is_group": false, "rank": 4}, {"company": "Expedia Group", "ticker": "EXPE US Equity", "yahoo": "EXPE", "opening": 119.16, "closing": 237.74, "total_return": 99.5, "ann_return": 41.2, "is_group": false, "rank": 5}, {"company": "Shopify Inc.", "ticker": "SHOP US Equity", "yahoo": "SHOP", "opening": 61.8, "closing": 112.2, "total_return": 81.5, "ann_return": 34.7, "is_group": false, "rank": 6}, {"company": "DoorDash", "ticker": "DASH US Equity", "yahoo": "DASH", "opening": 111.95, "closing": 166.72, "total_return": 48.9, "ann_return": 22.0, "is_group": false, "rank": 7}, {"company": "FSN Ecommerce (Nykaa)", "ticker": "NYKAA IN Equity", "yahoo": "NYKAA.NS", "opening": 2.04, "closing": 2.99, "total_return": 46.1, "ann_return": 20.9, "is_group": false, "rank": 8}, {"company": "Alibaba Group Ltd", "ticker": "BABA US Equity", "yahoo": "BABA", "opening": 79.31, "closing": 111.83, "total_return": 41.0, "ann_return": 18.7, "is_group": false, "rank": 9}, {"company": "Wayfair", "ticker": "W US Equity", "yahoo": "W", "opening": 57.23, "closing": 79.42, "total_return": 38.8, "ann_return": 17.8, "is_group": false, "rank": 10}, {"company": "Maplebear", "ticker": "CART US Equity", "yahoo": "CART", "opening": 32.37, "closing": 43.31, "total_return": 33.8, "ann_return": 15.7, "is_group": false, "rank": 11}, {"company": "Amazon", "ticker": "AMZN US Equity", "yahoo": "AMZN", "opening": 185.53, "closing": 244.62, "total_return": 31.9, "ann_return": 14.8, "is_group": false, "rank": 12}, {"company": "NetEase", "ticker": "9999 HK Equity", "yahoo": "9999.HK", "opening": 18.67, "closing": 24.6, "total_return": 31.8, "ann_return": 14.8, "is_group": false, "rank": 13}, {"company": "Sea Limited", "ticker": "SE US Equity", "yahoo": "SE", "opening": 72.37, "closing": 91.16, "total_return": 26.0, "ann_return": 12.2, "is_group": false, "rank": 14}, {"company": "Baidu", "ticker": "BIDU US Equity", "yahoo": "BIDU", "opening": 96.71, "closing": 120.54, "total_return": 24.6, "ann_return": 11.6, "is_group": false, "rank": 15}, {"company": "Meta Platforms", "ticker": "META US Equity", "yahoo": "META", "opening": 490.02, "closing": 592.77, "total_return": 21.0, "ann_return": 10.0, "is_group": false, "rank": 16}, {"company": "Zomato", "ticker": "ETERNAL IN Equity", "yahoo": "ETERNAL.NS", "opening": 2.23, "closing": 2.68, "total_return": 19.7, "ann_return": 9.4, "is_group": false, "rank": 17}, {"company": "Match Group", "ticker": "MTCH US Equity", "yahoo": "MTCH", "opening": 30.64, "closing": 35.88, "total_return": 17.1, "ann_return": 8.2, "is_group": false, "rank": 18}, {"company": "Bajaj Finance", "ticker": "BAF IN Equity", "yahoo": "BAJFINANCE.NS", "opening": 8.36, "closing": 9.77, "total_return": 16.9, "ann_return": 8.1, "is_group": false, "rank": 19}, {"company": "Etsy", "ticker": "ETSY US Equity", "yahoo": "ETSY", "opening": 61.71, "closing": 70.93, "total_return": 14.9, "ann_return": 7.2, "is_group": false, "rank": 20}, {"company": "Bilibili", "ticker": "BILI US Equity", "yahoo": "BILI", "opening": 15.54, "closing": 17.44, "total_return": 12.2, "ann_return": 5.9, "is_group": false, "rank": 21}, {"company": "Block", "ticker": "XYZ US Equity", "yahoo": "XYZ", "opening": 65.39, "closing": 73.1, "total_return": 11.8, "ann_return": 5.7, "is_group": false, "rank": 22}, {"company": "Booking.com", "ticker": "BKNG US Equity", "yahoo": "BKNG", "opening": 154.04, "closing": 171.35, "total_return": 11.2, "ann_return": 5.5, "is_group": false, "rank": 23}, {"company": "Zalando SE", "ticker": "ZAL GR Equity", "yahoo": "ZAL.DE", "opening": 24.87, "closing": 27.64, "total_return": 11.1, "ann_return": 5.4, "is_group": false, "rank": 24}, {"company": "People Inc", "ticker": "PPLI US Equity", "yahoo": "PPLI", "opening": 40.3, "closing": 43.39, "total_return": 7.7, "ann_return": 3.8, "is_group": false, "rank": 25}, {"company": "Group Market Cap", "ticker": "GROUP", "yahoo": "", "opening": 82740.0, "closing": 88569.0, "total_return": 7.0, "ann_return": 3.5, "is_group": true, "rank": 26}, {"company": "LY Corporation", "ticker": "4689 JP Equity", "yahoo": "4689.T", "opening": 2.41, "closing": 2.57, "total_return": 6.8, "ann_return": 3.3, "is_group": false, "rank": 27}, {"company": "Uber Technologies", "ticker": "UBER US Equity", "yahoo": "UBER", "opening": 67.79, "closing": 72.01, "total_return": 6.2, "ann_return": 3.1, "is_group": false, "rank": 28}, {"company": "MercadoLibre", "ticker": "MELI US Equity", "yahoo": "MELI", "opening": 1657.64, "closing": 1655.87, "total_return": -0.1, "ann_return": -0.1, "is_group": false, "rank": 29}, {"company": "Grab Holdings", "ticker": "GRAB US Equity", "yahoo": "GRAB", "opening": 3.64, "closing": 3.51, "total_return": -3.5, "ann_return": -1.7, "is_group": false, "rank": 30}, {"company": "Airbnb", "ticker": "ABNB US Equity", "yahoo": "ABNB", "opening": 147.14, "closing": 138.0, "total_return": -6.2, "ann_return": -3.2, "is_group": false, "rank": 31}, {"company": "JD.com", "ticker": "9618 HK Equity", "yahoo": "9618.HK", "opening": 15.11, "closing": 14.11, "total_return": -6.6, "ann_return": -3.4, "is_group": false, "rank": 32}, {"company": "Vend Marketplaces", "ticker": "VEND NO Equity", "yahoo": "VEND.OL", "opening": 28.21, "closing": 25.58, "total_return": -9.3, "ann_return": -4.8, "is_group": false, "rank": 33}, {"company": "Rakuten Group", "ticker": "4755 JP Equity", "yahoo": "4755.T", "opening": 5.2, "closing": 4.64, "total_return": -10.6, "ann_return": -5.4, "is_group": false, "rank": 34}, {"company": "Vipshop Ltd", "ticker": "VIPS US Equity", "yahoo": "VIPS", "opening": 15.6, "closing": 13.81, "total_return": -11.4, "ann_return": -5.9, "is_group": false, "rank": 35}, {"company": "Trip.com Group", "ticker": "TCOM US Equity", "yahoo": "TCOM", "opening": 51.51, "closing": 44.74, "total_return": -13.1, "ann_return": -6.8, "is_group": false, "rank": 36}, {"company": "Kuaishou Technology", "ticker": "1024 HK Equity", "yahoo": "1024.HK", "opening": 6.9, "closing": 5.78, "total_return": -16.1, "ann_return": -8.4, "is_group": false, "rank": 37}, {"company": "Chewy", "ticker": "CHWY US Equity", "yahoo": "CHWY", "opening": 24.28, "closing": 19.72, "total_return": -18.7, "ann_return": -9.8, "is_group": false, "rank": 38}, {"company": "Adyen N.V.", "ticker": "ADYEN NA Equity", "yahoo": "ADYEN.AS", "opening": 1286.16, "closing": 1005.85, "total_return": -21.8, "ann_return": -11.6, "is_group": false, "rank": 39}, {"company": "Zillow Group", "ticker": "ZG US Equity", "yahoo": "ZG", "opening": 43.63, "closing": 33.49, "total_return": -23.2, "ann_return": -12.4, "is_group": false, "rank": 40}, {"company": "Coupang", "ticker": "CPNG US Equity", "yahoo": "CPNG", "opening": 21.85, "closing": 16.75, "total_return": -23.3, "ann_return": -12.4, "is_group": false, "rank": 41}, {"company": "PayPal", "ticker": "PYPL US Equity", "yahoo": "PYPL", "opening": 62.1, "closing": 43.1, "total_return": -30.6, "ann_return": -16.7, "is_group": false, "rank": 42}, {"company": "Meituan", "ticker": "3690 HK Equity", "yahoo": "3690.HK", "opening": 14.72, "closing": 9.6, "total_return": -34.8, "ann_return": -19.2, "is_group": false, "rank": 43}, {"company": "Auto Trader", "ticker": "AUTO LN Equity", "yahoo": "AUTO.L", "opening": 10.27, "closing": 6.14, "total_return": -40.2, "ann_return": -22.7, "is_group": false, "rank": 44}, {"company": "Ocado group", "ticker": "OCDO LN Equity", "yahoo": "OCDO.L", "opening": 4.41, "closing": 2.59, "total_return": -41.3, "ann_return": -23.4, "is_group": false, "rank": 45}, {"company": "Kinnevik AB", "ticker": "KINVB SS Equity", "yahoo": "KINV-B.ST", "opening": 10.24, "closing": 5.93, "total_return": -42.1, "ann_return": -23.9, "is_group": false, "rank": 46}, {"company": "Pinduoduo", "ticker": "PDD US Equity", "yahoo": "PDD", "opening": 147.31, "closing": 83.26, "total_return": -43.5, "ann_return": -24.8, "is_group": false, "rank": 47}, {"company": "Pinterest", "ticker": "PINS US Equity", "yahoo": "PINS", "opening": 42.85, "closing": 20.65, "total_return": -51.8, "ann_return": -30.5, "is_group": false, "rank": 48}, {"company": "Snap", "ticker": "SNAP US Equity", "yahoo": "SNAP", "opening": 15.64, "closing": 5.22, "total_return": -66.6, "ann_return": -42.2, "is_group": false, "rank": 49}];
+const groupRow = DATA.find(d => d.is_group);
+const totalN = DATA.length;
+const peers = DATA.filter(d => !d.is_group);
+const below = peers.filter(p => p.ann_return < groupRow.ann_return).length;
+const pct = Math.round(below/peers.length*100);
+
+document.getElementById('rulerFill').style.width = pct + '%';
+const track = document.getElementById('rulerTrack');
+[0,25,50,75,100].forEach(t => {
+  const tick = document.createElement('div');
+  tick.className = 'ruler-tick';
+  tick.style.left = t + '%';
+  track.appendChild(tick);
+  const label = document.createElement('div');
+  label.className = 'ruler-tick-label';
+  label.style.left = t + '%';
+  label.textContent = t;
+  track.appendChild(label);
+});
+const marker = document.createElement('div');
+marker.className = 'ruler-marker';
+marker.style.left = pct + '%';
+track.appendChild(marker);
+const markerLabel = document.createElement('div');
+markerLabel.className = 'ruler-marker-label';
+markerLabel.style.left = pct + '%';
+markerLabel.textContent = 'Group \u00b7 ' + pct + 'th pct';
+track.appendChild(markerLabel);
+
+const labels = DATA.map(d => d.company);
+const values = DATA.map(d => d.ann_return);
+const colors = DATA.map(d => d.is_group ? '#0332AF' : (d.ann_return >= 0 ? '#3D7A5A' : '#B1483F'));
+
+const DOMAIN_MAP = {"SoftBank Group": "softbank.jp", "One97 Comms": "paytm.com", "eBay": "ebay.com", "Alphabet": "abc.xyz", "Expedia Group": "expediagroup.com", "Shopify Inc.": "shopify.com", "DoorDash": "doordash.com", "FSN Ecommerce (Nykaa)": "nykaa.com", "Alibaba Group Ltd": "alibabagroup.com", "Wayfair": "wayfair.com", "Maplebear": "instacart.com", "Amazon": "amazon.com", "NetEase": "netease.com", "Sea Limited": "sea.com", "Baidu": "baidu.com", "Meta Platforms": "meta.com", "Zomato": "zomato.com", "Match Group": "mtch.com", "Bajaj Finance": "bajajfinserv.in", "Etsy": "etsy.com", "Bilibili": "bilibili.com", "Block": "block.xyz", "Booking.com": "booking.com", "Zalando SE": "zalando.com", "People Inc": "peopleinc.com", "Group Market Cap": "prosus.com", "LY Corporation": "lycorp.co.jp", "Uber Technologies": "uber.com", "MercadoLibre": "mercadolibre.com", "Grab Holdings": "grab.com", "Airbnb": "airbnb.com", "JD.com": "jd.com", "Vend Marketplaces": "adevinta.com", "Rakuten Group": "rakuten.com", "Vipshop Ltd": "vip.com", "Trip.com Group": "trip.com", "Kuaishou Technology": "kuaishou.com", "Chewy": "chewy.com", "Adyen N.V.": "adyen.com", "Zillow Group": "zillow.com", "Coupang": "coupang.com", "PayPal": "paypal.com", "Meituan": "meituan.com", "Auto Trader": "autotrader.co.uk", "Ocado group": "ocadogroup.com", "Kinnevik AB": "kinnevik.com", "Pinduoduo": "pinduoduo.com", "Pinterest": "pinterest.com", "Snap": "snap.com"};
+
+function faviconUrl(domain) {
+  return `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+}
+
+function initialsFor(name) {
+  const words = name.replace(/\(.*?\)/g, '').trim().split(/\s+/).filter(Boolean);
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return (words[0][0] + words[1][0]).toUpperCase();
+}
+
+function loadLogo(company) {
+  return new Promise((resolve) => {
+    const domain = DOMAIN_MAP[company];
+    if (!domain) { resolve(null); return; }
+    const img = new Image();
+    const timer = setTimeout(() => resolve(null), 3000);
+    img.onload = () => { clearTimeout(timer); resolve(img); };
+    img.onerror = () => { clearTimeout(timer); resolve(null); };
+    img.src = faviconUrl(domain);
+  });
+}
+
+const PERCENTILE_LINES = [
+  { p: 30, value: -5.85, idx: 33.9 },
+  { p: 50, value: 4.6, idx: 23.5 },
+  { p: 75, value: 14.8, idx: 11.0 },
+];
+
+const percentileLinePlugin = {
+  id: 'percentileLines',
+  afterDatasetsDraw(chart) {
+    const { ctx, chartArea: { left, right }, scales: { y } } = chart;
+    ctx.save();
+    PERCENTILE_LINES.forEach(line => {
+      const yPixel = y.getPixelForValue(line.idx);
+      ctx.beginPath();
+      ctx.setLineDash([4, 4]);
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = '#8B93A0';
+      ctx.moveTo(left, yPixel);
+      ctx.lineTo(right, yPixel);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#5B6472';
+      ctx.font = '11px IBM Plex Mono, monospace';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillText('P' + line.p + ' \u00b7 ' + (line.value >= 0 ? '+' : '') + line.value.toFixed(1) + '%', right, yPixel - 4);
+    });
+    ctx.restore();
+  }
+};
+
+const barLabelPlugin = {
+  id: 'barLabels',
+  afterDatasetsDraw(chart) {
+    const { ctx } = chart;
+    const meta = chart.getDatasetMeta(0);
+    ctx.save();
+    ctx.font = '10px IBM Plex Mono, monospace';
+    ctx.fillStyle = '#5B6472';
+    ctx.textBaseline = 'middle';
+    meta.data.forEach((bar, i) => {
+      const value = chart.data.datasets[0].data[i];
+      const label = (value >= 0 ? '+' : '') + value.toFixed(1) + '%';
+      const { x, y } = bar.getProps(['x', 'y'], true);
+      if (value >= 0) {
+        ctx.textAlign = 'left';
+        ctx.fillText(label, x + 5, y);
+      } else {
+        ctx.textAlign = 'right';
+        ctx.fillText(label, x - 5, y);
+      }
+    });
+    ctx.restore();
+  }
+};
+
+function makeLogoPlugin(logos) {
+  const ICON = 20;
+  return {
+    id: 'rowLogos',
+    afterDatasetsDraw(chart) {
+      const { ctx, scales: { y } } = chart;
+      ctx.save();
+      DATA.forEach((d, i) => {
+        const yPixel = y.getPixelForValue(i);
+        const cx = 18;
+        const img = logos[i];
+        if (img) {
+          ctx.drawImage(img, cx - ICON / 2, yPixel - ICON / 2, ICON, ICON);
+        } else {
+          ctx.beginPath();
+          ctx.fillStyle = d.is_group ? '#E7EAF8' : '#E2E5EA';
+          ctx.arc(cx, yPixel, ICON / 2, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = d.is_group ? '#0332AF' : '#5B6472';
+          ctx.font = '9px Inter, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(initialsFor(d.company), cx, yPixel + 0.5);
+        }
+      });
+      ctx.restore();
+    }
+  };
+}
+
+(async function buildChart() {
+  const logos = await Promise.all(DATA.map(d => loadLogo(d.company)));
+  const logoPlugin = makeLogoPlugin(logos);
+
+  new Chart(document.getElementById('rankChart'), {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        data: values,
+        backgroundColor: colors,
+        borderRadius: 3,
+        barThickness: 11,
+      }]
+    },
+    plugins: [percentileLinePlugin, barLabelPlugin, logoPlugin],
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      layout: {
+        padding: { right: 36, left: 40 }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => (ctx.raw >= 0 ? '+' : '') + ctx.raw.toFixed(1) + '% annualised'
+          }
+        }
+      },
+      scales: {
+        x: {
+          grace: '8%',
+          grid: { color: '#E2E5EA' },
+          ticks: { color: '#8B93A0', font: { size: 11 }, callback: (v) => (v>=0?'+':'') + v + '%' }
+        },
+        y: {
+          grid: { display: false },
+          ticks: {
+            color: '#5B6472',
+            font: (ctx) => ({ size: 11, weight: DATA[ctx.index] && DATA[ctx.index].is_group ? '700' : '400' })
+          }
+        }
+      }
+    }
+  });
+})();
+
+function renderTable(filterText) {
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = '';
+  const f = (filterText || '').toLowerCase();
+  DATA.forEach(d => {
+    if (f && !d.company.toLowerCase().includes(f) && !d.ticker.toLowerCase().includes(f)) return;
+    const tr = document.createElement('tr');
+    if (d.is_group) tr.className = 'group-row';
+    const totalCls = d.total_return >= 0 ? 'pos' : 'neg';
+    const annCls = d.ann_return >= 0 ? 'pos' : 'neg';
+    tr.innerHTML = `
+      <td class="num rank-cell">${d.rank}</td>
+      <td class="company-cell">${d.company}</td>
+      <td>${d.ticker}</td>
+      <td class="num">${d.opening.toLocaleString()}</td>
+      <td class="num">${d.closing.toLocaleString()}</td>
+      <td class="num ${d.is_group ? '' : totalCls}">${d.total_return >= 0 ? '+' : ''}${d.total_return.toFixed(1)}%</td>
+      <td class="num ${d.is_group ? '' : annCls}">${d.ann_return >= 0 ? '+' : ''}${d.ann_return.toFixed(1)}%</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+renderTable('');
+document.getElementById('filter').addEventListener('input', (e) => renderTable(e.target.value));
+</script>
+</body>
+</html>
